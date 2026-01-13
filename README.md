@@ -29,6 +29,56 @@ La Defensa del Producto final se realizara en los grupos designados en clase y t
 
 ---
 
+## Requisitos y Entorno de Trabajo
+
+Para construir la ISO y automatizar tareas post-instalación se trabajó en un entorno Windows con herramientas de despliegue.
+
+**Requisitos:**
+
+* **Windows ADK** instalado con el componente **Deployment Tools** (necesario para usar `oscdimg.exe`).
+* Carpeta de trabajo:
+
+  * `C:\ISO` → ISO extraída (contenido completo del medio).
+  * `C:\Work` → recursos y archivos a integrar (Brave, 7-Zip, FBNeo, `DefaultAssociations.xml`, `Ivan.jpg`).
+
+**Nota:** `oscdimg` no estaba en el PATH, por lo que se utilizó siempre la **ruta completa** al ejecutable.
+
+---
+
+## Estructura Final de Carpetas ($OEM$)
+
+Se usó el método OEM:
+
+* `C:\ISO\sources\$OEM$\$1\...`  → se copia a `C:\...` dentro de Windows instalado
+* `C:\ISO\sources\$OEM$\$$\...` → se copia a `C:\Windows\...` dentro de Windows instalado
+* `SetupComplete.cmd` vive en `C:\ISO\sources\$OEM$\$$\Setup\Scripts\SetupComplete.cmd`
+
+**Árbol final recomendado:**
+
+```
+C:\ISO\sources\$OEM$\
+ ├─ $1\
+ │   ├─ Install\
+ │   │   ├─ Brave\
+ │   │   │   ├─ BraveBrowserStandaloneSetup.exe
+ │   │   ├─ 7zip\
+ │   │   │   ├─ 7zip.exe
+ │   │   └─ Post\
+ │   │       └─ PostInstall.cmd
+ │   └─ Apps\
+ │       └─ FBNeo\   (portable: fbneo.exe + carpetas)
+ └─ $$\
+     ├─ DefaultAssociations.xml
+     ├─ Setup\
+     │   └─ Scripts\
+     │       └─ SetupComplete.cmd
+     └─ Web\
+         ├─ Wallpaper\Windows\img0.jpg
+         └─ 4K\Wallpaper\Windows\img0_*.jpg
+```
+
+---
+
 ##  Cambios de la ISO propia
 
 * Aplicaciones y características innecesarias eliminadas (Cortana, aplicaciones de Xbox, Correo y Calendario, Fotos, Clipchamp, WMP, Media Foundation de 32 bits, IIS, WSL, Edge heredado, muchos paquetes de idioma, fondos de pantalla, Explorador de archivos heredado, redes entre pares, Servidor de Escritorio remoto, etc.)
