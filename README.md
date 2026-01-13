@@ -53,3 +53,109 @@ La Defensa del Producto final se realizara en los grupos designados en clase y t
 * Instalado Emulador FinalBurn Neo con ___ preinstalado.
 
 * Cambiado el fondo de escritorio por foto propia.
+
+### Estructura base
+Se trabajó siempre sobre una ISO extraída en C:\ISO.
+Se evitó NTLite; todo se hizo manualmente.
+Estructura de carpetas:
+~~~~
+bat
+mkdir C:\ISO
+robocopy D:\ C:\ISO\ /E
+~~~~
+### Uso de OEM
+~~~~
+C:\ISO\sources\$OEM$\$1\...  → se copia a C:\... dentro de Windows instalado
+C:\ISO\sources\$OEM$\$$\... → se copia a C:\Windows\... dentro de Windows instalado
+SetupComplete.cmd vive en C:\ISO\sources\$OEM$\$$\Setup\Scripts\SetupComplete.cmd
+~~~~
+#### Estructura de carpetas:
+~~~~
+bat
+mkdir "C:\ISO\sources\$OEM$\$1\Install\Brave" 2>nul
+mkdir "C:\ISO\sources\$OEM$\$1\Install\7zip" 2>nul
+mkdir "C:\ISO\sources\$OEM$\$1\Install\Post" 2>nul
+mkdir "C:\ISO\sources\$OEM$\$1\Apps\FBNeo" 2>nul
+mkdir "C:\ISO\sources\$OEM$\$$\Setup\Scripts" 2>nul
+mkdir "C:\ISO\sources\$OEM$\$$" 2>nul
+~~~~
+
+### Brave
+Problemas con instaladores “SilentSetup” y con ejecutar tareas pesadas en SetupComplete.
+Solución:
+Usar BraveBrowserStandaloneSetup.exe.
+Ejecutarlo en un script de PostInstall, no directamente en SetupComplete.
+Instalación silenciosa tras el primer logon.
+~~~~
+bat
+copy /y "C:\Work\BraveBrowserStandaloneSetup.exe" "C:\ISO\sources\$OEM$\$1\Install\Brave\BraveBrowserStandaloneSetup.exe"
+
+start /wait "" "C:\Install\Brave\BraveBrowserStandaloneSetup.exe" /silent /install
+~~~~
+
+### DefaultAssociations.xml
+Se preparó para definir Brave como navegador por defecto.
+Se copió a C:\Windows\DefaultAssociations.xml vía $OEM$\$$.
+Método basado en exportar/importar asociaciones con DISM.
+Aplica mejor a usuarios nuevos en Windows 11.
+~~~~
+bat
+copy /y "C:\Work\DefaultAssociations.xml" "C:\ISO\sources\$OEM$\$$\DefaultAssociations.xml"
+~~~~
+
+### 7-Zip
+El instalador dentro del ISO estaba truncado (tamaño incorrecto).
+Se solucionó copiando correctamente el EXE oficial x64.
+Se verificó con hashes SHA256.
+Verificación con hash (para detectar truncado):
+~~~~
+bat
+certutil -hashfile "C:\Work\7zip.exe" SHA256
+certutil -hashfile "C:\ISO\sources\$OEM$\$1\Install\7zip\7zip.exe" SHA256
+~~~~
+Instalación silenciosa en PostInstall:
+~~~~
+bat
+"C:\Install\7zip\7zip.exe" /S /D="C:\Program Files\7-Zip"
+~~~~
+
+### FBNeo
+Tratado como aplicación portable.
+
+### Copia completa de la carpeta con robocopy
+~~~~
+bat
+robocopy "C:\Work\FBNeo" "C:\ISO\sources\$OEM$\$1\Apps\FBNeo" /E
+~~~~
+Se creó acceso directo en C:\Users\Public\Desktop para todos los usuarios.
+
+### Arquitectura final de scripts
+#### SetupComplete.cmd
+Para evitar pantallazos negros
+~~~~
+bat
+@echo off
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v PostInstall /t REG_SZ /d "\"C:\Install\Post\PostInstall.cmd\"" /f
+exit /b 0
+~~~~
+
+#### PostInstall.cmd 
+Instala Brave y 7-Zip.
+Crea accesos directos.
+Genera log en C:\Windows\Temp\PostInstall.log.
+
+#### Recompilación de la ISO
+Se usó oscdimg del Windows ADK.
+Se generó una ISO booteable (BIOS + UEFI) desde C:\ISO.
+~~~~
+bat
+"C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe" -m -o -u2 -udfver102 -bootdata:2#p0,e,bC:\ISO\boot\etfsboot.com#pEF,e,bC:\ISO\efi\microsoft\boot\efisys.bin C:\ISO C:\Win11_Lite.iso
+~~~~
+
+### Logs para depuración
+~~~~
+type C:\Windows\Temp\SetupComplete.log
+type C:\Windows\Temp\PostInstall.log
+type C:\Windows\Temp\BraveInstall.log
+~~~~
+Sirvió para detectar cuelgues, rutas incorrectas y códigos de salida.
