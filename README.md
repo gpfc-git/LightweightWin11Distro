@@ -50,9 +50,13 @@ La Defensa del Producto final se realizara en los grupos designados en clase y t
 
 * Instalado 7-Zip.
 
-* Instalado Emulador FinalBurn Neo con ___ preinstalado.
+* Instalado Emulador FinalBurn Neo.
 
 * Cambiado el fondo de escritorio por foto propia.
+
+
+
+# Información Técnica
 
 ### Estructura base
 Se trabajó siempre sobre una ISO extraída en C:\ISO.
@@ -63,12 +67,14 @@ bat
 mkdir C:\ISO
 robocopy D:\ C:\ISO\ /E
 ~~~~
+
 ### Uso de OEM
 ~~~~
 C:\ISO\sources\$OEM$\$1\...  → se copia a C:\... dentro de Windows instalado
 C:\ISO\sources\$OEM$\$$\... → se copia a C:\Windows\... dentro de Windows instalado
 SetupComplete.cmd vive en C:\ISO\sources\$OEM$\$$\Setup\Scripts\SetupComplete.cmd
 ~~~~
+
 #### Estructura de carpetas:
 ~~~~
 bat
@@ -159,3 +165,60 @@ type C:\Windows\Temp\PostInstall.log
 type C:\Windows\Temp\BraveInstall.log
 ~~~~
 Sirvió para detectar cuelgues, rutas incorrectas y códigos de salida.
+
+### Fondo de Escritorio
+
+#### Primer intento: política / registro (fallido)
+~~~~
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v Wallpaper /t REG_SZ /d "C:\Wall\Ivan.jpg" /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v WallpaperStyle /t REG_SZ /d "10" /f
+gpupdate /force
+~~~~
+Aplicar el fondo por política durante OOBE no es fiable porque Windows reaplica tema y cachés en el primer logon.
+
+#### Método Win32 considerado (no consistente en setup)
+~~~~
+rundll32.exe user32.dll,UpdatePerUserSystemParameters
+~~~~
+Forzar refresco del wallpaper funciona en sesión normal, pero no de forma consistente durante la instalación.
+
+#### Estrategia final: reemplazo del wallpaper por defecto
+~~~~
+C:\Windows\Web\Wallpaper\Windows\img0.jpg
+C:\Windows\Web\4K\Wallpaper\Windows\img0_*.jpg
+~~~~
+Reemplazar los archivos que Windows usa por defecto garantiza que la imagen se aplique desde el primer inicio.
+
+#### Integración en la ISO con OEM$$
+~~~~
+mkdir "C:\ISO\sources\$OEM$\$$\Web\Wallpaper\Windows" 2>nul
+copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\Wallpaper\Windows\img0.jpg"
+~~~~
+OEM$$ copia directamente a C:\Windows durante la instalación.
+
+#### Variantes 4K del wallpaper
+~~~~
+mkdir "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows" 2>nul
+
+copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows\img0_3840x2160.jpg"
+copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows\img0_2560x1600.jpg"
+copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows\img0_1920x1200.jpg"
+copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows\img0_1920x1080.jpg"
+copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows\img0_1366x768.jpg"
+~~~~
+Copiar todas las resoluciones evita que Windows use una imagen cacheada distinta.
+
+#### Limpieza del PostInstall
+~~~~
+:: eliminar reg add ... Personalization
+:: eliminar gpupdate /force
+~~~~
+Al cambiar el wallpaper por defecto real, las políticas dejan de ser necesarias.
+
+#### Validación tras instalar
+~~~~
+dir "C:\Windows\Web\Wallpaper\Windows\img0.jpg"
+dir "C:\Windows\Web\4K\Wallpaper\Windows"
+~~~~
+Si los archivos existen con los nombres correctos, el fondo se aplica desde el primer logon.
+
