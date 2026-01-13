@@ -1,7 +1,9 @@
 # Distribución Ligera Windows 11
 Sistemas Operativos - Grado de Desarrollo Full-Stack
 
-Pablo Novoa - Gonzalo Pérez Fernández-Corugedo
+Gonzalo Pérez Fernández-Corugedo - https://github.com/gpfc-git
+
+Pablo Novoa Rodríguez - https://github.com/PRNovoa
 
 ---
 https://drive.google.com/drive/folders/1O__51oBibA1Ky09olc6TnBIOiurlDRNt?usp=drive_link
