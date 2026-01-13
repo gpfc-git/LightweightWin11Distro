@@ -1,7 +1,9 @@
 # Distribución Ligera Windows 11
-Proyecto De Sistemas Operativos - Grado de Desarrollo Full-Stack
+Sistemas Operativos - Grado de Desarrollo Full-Stack
 
 Pablo Novoa - Gonzalo Pérez Fernández-Corugedo
+
+---
 
 ## Instrucciones
 
@@ -22,9 +24,9 @@ Deben realizar la Entrega enviando una Url del GitHub donde este cargado con su 
 
 La Defensa del Producto final se realizara en los grupos designados en clase y tendrán 30 minutos cada equipo para sustentar las acciones y ser probadas.
 
-## Modificaciones
+---
 
-### Cambios de la ISO propia
+##  Cambios de la ISO propia
 
 * Aplicaciones y características innecesarias eliminadas (Cortana, aplicaciones de Xbox, Correo y Calendario, Fotos, Clipchamp, WMP, Media Foundation de 32 bits, IIS, WSL, Edge heredado, muchos paquetes de idioma, fondos de pantalla, Explorador de archivos heredado, redes entre pares, Servidor de Escritorio remoto, etc.)
 
@@ -44,7 +46,7 @@ La Defensa del Producto final se realizara en los grupos designados en clase y t
 
 * Características de componentes como Impresión, impresión en PDF, Carpetas de trabajo, infraestructura MSRDC y la característica de Búsqueda de Windows deshabilitadas (según la lista de características de NTLite)
 
-### Elementos adicionales
+## Elementos adicionales
 
 * Navegador Brave instalado silenciosamente y establecido como navegador predeterminado.
 
@@ -54,9 +56,9 @@ La Defensa del Producto final se realizara en los grupos designados en clase y t
 
 * Cambiado el fondo de escritorio por foto propia.
 
+---
 
-
-# Información Técnica
+## Información Técnica
 
 ### Estructura base
 Se trabajó siempre sobre una ISO extraída en C:\ISO.
@@ -129,11 +131,11 @@ bat
 Tratado como aplicación portable.
 
 ### Copia completa de la carpeta con robocopy
+Se creó acceso directo en C:\Users\Public\Desktop para todos los usuarios.
 ~~~~
 bat
 robocopy "C:\Work\FBNeo" "C:\ISO\sources\$OEM$\$1\Apps\FBNeo" /E
 ~~~~
-Se creó acceso directo en C:\Users\Public\Desktop para todos los usuarios.
 
 ### Arquitectura final de scripts
 #### SetupComplete.cmd
@@ -159,44 +161,47 @@ bat
 ~~~~
 
 ### Logs para depuración
+Sirvieron para detectar cuelgues, rutas incorrectas y códigos de salida.
 ~~~~
 type C:\Windows\Temp\SetupComplete.log
 type C:\Windows\Temp\PostInstall.log
 type C:\Windows\Temp\BraveInstall.log
 ~~~~
-Sirvió para detectar cuelgues, rutas incorrectas y códigos de salida.
+
+---
 
 ### Fondo de Escritorio
 
 #### Primer intento: política / registro (fallido)
+Aplicar el fondo por política durante OOBE no es fiable porque Windows reaplica tema y cachés en el primer logon.
 ~~~~
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v Wallpaper /t REG_SZ /d "C:\Wall\Ivan.jpg" /f
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v WallpaperStyle /t REG_SZ /d "10" /f
 gpupdate /force
 ~~~~
-Aplicar el fondo por política durante OOBE no es fiable porque Windows reaplica tema y cachés en el primer logon.
 
 #### Método Win32 considerado (no consistente en setup)
+Forzar refresco del wallpaper funciona en sesión normal, pero no de forma consistente durante la instalación.
 ~~~~
 rundll32.exe user32.dll,UpdatePerUserSystemParameters
 ~~~~
-Forzar refresco del wallpaper funciona en sesión normal, pero no de forma consistente durante la instalación.
 
 #### Estrategia final: reemplazo del wallpaper por defecto
+Reemplazar los archivos que Windows usa por defecto garantiza que la imagen se aplique desde el primer inicio.
 ~~~~
 C:\Windows\Web\Wallpaper\Windows\img0.jpg
 C:\Windows\Web\4K\Wallpaper\Windows\img0_*.jpg
 ~~~~
-Reemplazar los archivos que Windows usa por defecto garantiza que la imagen se aplique desde el primer inicio.
 
-#### Integración en la ISO con OEM$$
+#### Integración en la ISO con OEM\$$
+OEM\$$ copia directamente a C:\Windows durante la instalación.
 ~~~~
 mkdir "C:\ISO\sources\$OEM$\$$\Web\Wallpaper\Windows" 2>nul
 copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\Wallpaper\Windows\img0.jpg"
 ~~~~
-OEM$$ copia directamente a C:\Windows durante la instalación.
 
 #### Variantes 4K del wallpaper
+Copiar todas las resoluciones evita que Windows use una imagen cacheada distinta.
 ~~~~
 mkdir "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows" 2>nul
 
@@ -206,19 +211,18 @@ copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows\img
 copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows\img0_1920x1080.jpg"
 copy /y "C:\Work\Ivan.jpg" "C:\ISO\sources\$OEM$\$$\Web\4K\Wallpaper\Windows\img0_1366x768.jpg"
 ~~~~
-Copiar todas las resoluciones evita que Windows use una imagen cacheada distinta.
 
 #### Limpieza del PostInstall
+Al cambiar el wallpaper por defecto real, las políticas dejan de ser necesarias.
 ~~~~
 :: eliminar reg add ... Personalization
 :: eliminar gpupdate /force
 ~~~~
-Al cambiar el wallpaper por defecto real, las políticas dejan de ser necesarias.
 
 #### Validación tras instalar
+Si los archivos existen con los nombres correctos, el fondo se aplica desde el primer logon.
 ~~~~
 dir "C:\Windows\Web\Wallpaper\Windows\img0.jpg"
 dir "C:\Windows\Web\4K\Wallpaper\Windows"
 ~~~~
-Si los archivos existen con los nombres correctos, el fondo se aplica desde el primer logon.
 
